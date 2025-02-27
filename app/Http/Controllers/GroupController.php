@@ -31,6 +31,7 @@ class GroupController extends Controller
         $group = Group::create($data);
         // Attach the authenticated user as the owner.
         $group->users()->attach(Auth::id(), ['role' => 'owner']);
+        \Log::debug('Group created successfully');
         return response()->json($group, 201);
     }
 
