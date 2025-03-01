@@ -20,6 +20,15 @@ export default defineConfig({
             },
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                entryFileNames: `[name].[hash].js`,
+                chunkFileNames: `[name].[hash].js`,
+                assetFileNames: `[name].[hash].[ext]`,
+            },
+        },
+    },
     resolve: {
         alias: {
             vue: 'vue/dist/vue.esm-bundler.js',

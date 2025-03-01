@@ -3,66 +3,136 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\TransactionCategory;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class TransactionController extends Controller
 {
-    // List transactions for groups that the user belongs to.
-    public function index()
+    /**
+     * Fetch all transactions for the currently selected group.
+     */
+    public function index(Request $request)
     {
-        $user = Auth::user();
-        // Fetch transactions from all groups the user is a member of.
-        $transactions = Transaction::whereIn('group_id', $user->groups->pluck('id'))->get();
+        $groupId = $request->query('group_id');
+
+        if (!$groupId) {
+            return response()->json(['error' => 'No group selected'], 403);
+        }
+
+        $query = Transaction::where('group_id', $groupId);
+
+        // Filter by transaction type (income/expense)
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+
+        // Filter by category
+        if ($request->has('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filter by date range
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('transaction_time', [$request->start_date, $request->end_date]);
+        }
+
+        $transactions = $query->orderBy('transaction_time', 'desc')->paginate(10);
+
         return response()->json($transactions);
     }
 
-    // Store a new transaction.
+    /**
+     * Create a new transaction in the group.
+     */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'group_id'         => 'required|exists:groups,id',
-            'amount'           => 'required|numeric',
-            'type'             => 'required|in:income,expense',
-            'description'      => 'nullable|string',
-            'actor'            => 'nullable|string',
-            'transaction_time' => 'required|date',
-            'proof'            => 'nullable|string',
-            'category_id'      => 'nullable|exists:transaction_categories,id',
+        $request->validate([
+            'type' => ['required', Rule::in(['income', 'expense'])],
+            'category_id' => ['required', 'exists:transaction_categories,id'],
+            'amount' => ['required', 'numeric'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'actor' => ['required', 'string', 'max:255'],
+            'transaction_time' => ['required', 'date'],
+            'proof' => ['nullable', 'file', 'mimes:jpg,png,pdf', 'max:2048'],
         ]);
 
-        // Set the authenticated user as the creator.
-        $data['user_id'] = Auth::id();
-        $transaction = Transaction::create($data);
+        $groupId = $request->user()->current_group_id;
+
+        if (!$groupId) {
+            return response()->json(['error' => 'No group selected'], 403);
+        }
+
+        $proofPath = null;
+        if ($request->hasFile('proof')) {
+            $proofPath = $request->file('proof')->store('proofs', 'public');
+        }
+
+        $transaction = Transaction::create([
+            'user_id' => $request->user()->id,
+            'group_id' => $groupId,
+            'category_id' => $request->category_id,
+            'amount' => $request->amount,
+            'type' => $request->type,
+            'description' => $request->description,
+            'actor' => $request->actor,
+            'transaction_time' => $request->transaction_time,
+            'proof' => $proofPath,
+        ]);
+
         return response()->json($transaction, 201);
     }
 
-    // Show a specific transaction.
-    public function show(Transaction $transaction)
-    {
-        return response()->json($transaction);
-    }
-
-    // Update an existing transaction.
+    /**
+     * Update an existing transaction.
+     */
     public function update(Request $request, Transaction $transaction)
     {
-        $data = $request->validate([
-            'amount'           => 'sometimes|required|numeric',
-            'type'             => 'sometimes|required|in:income,expense',
-            'description'      => 'nullable|string',
-            'actor'            => 'nullable|string',
-            'transaction_time' => 'sometimes|required|date',
-            'proof'            => 'nullable|string',
-            'category_id'      => 'nullable|exists:transaction_categories,id',
+        if ($transaction->group_id !== $request->user()->current_group_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'type' => [Rule::in(['income', 'expense'])],
+            'category_id' => ['exists:transaction_categories,id'],
+            'amount' => ['numeric'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'actor' => ['string', 'max:255'],
+            'transaction_time' => ['date'],
+            'proof' => ['nullable', 'file', 'mimes:jpg,png,pdf', 'max:2048'],
         ]);
-        $transaction->update($data);
+
+        if ($request->hasFile('proof')) {
+            // Delete old proof file if exists
+            if ($transaction->proof) {
+                Storage::disk('public')->delete($transaction->proof);
+            }
+            $transaction->proof = $request->file('proof')->store('proofs', 'public');
+        }
+
+        $transaction->update($request->except('proof'));
+
         return response()->json($transaction);
     }
 
-    // Delete a transaction.
-    public function destroy(Transaction $transaction)
+    /**
+     * Delete a transaction.
+     */
+    public function destroy(Request $request, Transaction $transaction)
     {
+        if ($transaction->group_id !== $request->user()->current_group_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        if ($transaction->proof) {
+            Storage::disk('public')->delete($transaction->proof);
+        }
+
         $transaction->delete();
+
         return response()->json(null, 204);
     }
 }

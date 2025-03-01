@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransactionCategoryController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -56,4 +57,26 @@ Route::post('/email/resend', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('groups', GroupController::class);
     Route::apiResource('transactions', TransactionController::class);
+
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    // Groups
+    Route::get('/groups', [GroupController::class, 'index']);
+    Route::post('/groups', [GroupController::class, 'store']);
+    Route::get('/groups/{group}', [GroupController::class, 'show']);
+    Route::put('/groups/{group}', [GroupController::class, 'update']);
+    Route::delete('/groups/{group}', [GroupController::class, 'destroy']);
+
+    // Transactions
+    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::post('/transactions', [TransactionController::class, 'store']);
+    Route::put('/transactions/{transaction}', [TransactionController::class, 'update']);
+    Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy']);
+
+    // Transaction Categories
+    Route::get('/categories', [TransactionCategoryController::class, 'index']);
+    Route::post('/categories', [TransactionCategoryController::class, 'store']);
+    Route::delete('/categories/{category}', [TransactionCategoryController::class, 'destroy']);
 });
