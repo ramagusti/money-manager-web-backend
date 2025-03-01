@@ -22,7 +22,7 @@ jobs:
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem
           chmod 600 private_key.pem
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
-            cd /var/www/money-manager-web
+            cd /var/www/money-manager-web-backend
             git pull origin main
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
