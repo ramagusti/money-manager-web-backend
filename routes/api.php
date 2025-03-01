@@ -4,9 +4,53 @@ use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/email/verify/{id}/{hash}', function ($id, $hash, Request $request) {
+    // Find the user
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json(['message' => 'User not found.'], 404);
+    }
+
+    // Verify the hash
+    if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        return response()->json(['message' => 'Invalid verification link.'], 403);
+    }
+
+    // If already verified
+    if ($user->hasVerifiedEmail()) {
+        return redirect(env('FRONTEND_URL', 'http://localhost:5173') . '/already-verified');
+    }
+
+    // Mark email as verified
+    $user->markEmailAsVerified();
+
+    return redirect(env('FRONTEND_URL', 'http://localhost:5173') . '/verified-success');
+})->middleware(['signed'])->name('verification.verify');
+
+Route::post('/email/resend', function (Request $request) {
+    $request->validate([
+        'email' => 'required|email|exists:users,email',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    if ($user->hasVerifiedEmail()) {
+        return response()->json(['message' => 'Email already verified.'], 400);
+    }
+
+    $user->sendEmailVerificationNotification();
+
+    return response()->json(['message' => 'Verification email sent!']);
+});
 
 // For simplicity, using the "auth" middleware here (adjust based on your auth setup)
 Route::middleware('auth:sanctum')->group(function () {
