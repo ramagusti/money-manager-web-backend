@@ -23,7 +23,7 @@ jobs:
           chmod 600 private_key.pem
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
             cd /var/www/money-manager-web-backend
-            git pull origin main
+            sudo git pull origin main
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan cache:clear
