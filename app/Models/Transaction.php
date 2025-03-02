@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transaction extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -20,6 +21,8 @@ class Transaction extends Model
         'transaction_time',
         'proof'
     ];
+
+    protected $dates = ['deleted_at'];
 
     /**
      * The user who created the transaction.

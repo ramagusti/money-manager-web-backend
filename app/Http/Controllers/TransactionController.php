@@ -9,6 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Exports\TransactionsExport;
+use App\Exports\TransactionsTemplateExport;
+use App\Imports\TransactionsImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TransactionController extends Controller
 {
@@ -23,26 +27,36 @@ class TransactionController extends Controller
             return response()->json(['error' => 'No group selected'], 403);
         }
 
-        $query = Transaction::where('group_id', $groupId);
+        $query = Transaction::where('group_id', $groupId)->with('category');
 
         // Filter by transaction type (income/expense)
-        if ($request->has('type')) {
+        if ($request->has('type') && !empty($request->type)) {
             $query->where('type', $request->type);
         }
 
         // Filter by category
-        if ($request->has('category_id')) {
+        if ($request->has('category_id') && !empty($request->category_id)) {
             $query->where('category_id', $request->category_id);
         }
 
-        // Filter by date range
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $query->whereBetween('transaction_time', [$request->start_date, $request->end_date]);
+        // Filter by month
+        if ($request->has('date') && !empty($request->date)) {
+            $date = $request->date;
+            $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
         }
+
+        $totalIncome = $query->clone()->where('type', 'income')->sum('amount');
+        $totalExpense = $query->clone()->where('type', 'expense')->sum('amount');
+        $totalSavings = $totalIncome - $totalExpense;
 
         $transactions = $query->orderBy('transaction_time', 'desc')->paginate(10);
 
-        return response()->json($transactions);
+        return response()->json([
+            'transactions' => $transactions,
+            'total_income' => $totalIncome,
+            'total_expense' => $totalExpense,
+            'total_savings' => $totalSavings,
+        ]);
     }
 
     /**
@@ -53,6 +67,7 @@ class TransactionController extends Controller
         $request->validate([
             'type' => ['required', Rule::in(['income', 'expense'])],
             'category_id' => ['required', 'exists:transaction_categories,id'],
+            'group_id' => ['required', 'exists:groups,id'],
             'amount' => ['required', 'numeric'],
             'description' => ['nullable', 'string', 'max:255'],
             'actor' => ['required', 'string', 'max:255'],
@@ -60,7 +75,7 @@ class TransactionController extends Controller
             'proof' => ['nullable', 'file', 'mimes:jpg,png,pdf', 'max:2048'],
         ]);
 
-        $groupId = $request->user()->current_group_id;
+        $groupId = $request->input('group_id');
 
         if (!$groupId) {
             return response()->json(['error' => 'No group selected'], 403);
@@ -91,13 +106,14 @@ class TransactionController extends Controller
      */
     public function update(Request $request, Transaction $transaction)
     {
-        if ($transaction->group_id !== $request->user()->current_group_id) {
+        if ($transaction->group_id != $request->input('group_id')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $request->validate([
             'type' => [Rule::in(['income', 'expense'])],
             'category_id' => ['exists:transaction_categories,id'],
+            'group_id' => ['required', 'exists:groups,id'],
             'amount' => ['numeric'],
             'description' => ['nullable', 'string', 'max:255'],
             'actor' => ['string', 'max:255'],
@@ -123,16 +139,33 @@ class TransactionController extends Controller
      */
     public function destroy(Request $request, Transaction $transaction)
     {
-        if ($transaction->group_id !== $request->user()->current_group_id) {
+        if ($transaction->group_id != $request->input('group_id')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        if ($transaction->proof) {
-            Storage::disk('public')->delete($transaction->proof);
-        }
-
-        $transaction->delete();
+        $transaction->delete(); // Soft delete
 
         return response()->json(null, 204);
+    }
+
+    public function export(Request $request)
+    {
+        return Excel::download(new TransactionsExport($request->group_id), 'transactions.xlsx');
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new TransactionsTemplateExport(), 'transactions_template.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx',
+        ]);
+
+        Excel::import(new TransactionsImport($request->group_id), $request->file('file'));
+
+        return response()->json(["message" => "Transactions imported successfully"]);
     }
 }

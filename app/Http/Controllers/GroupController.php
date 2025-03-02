@@ -58,4 +58,14 @@ class GroupController extends Controller
         $group->delete();
         return response()->json(null, 204);
     }
+
+    public function getMembers(Group $group)
+    {
+        if (!$group) {
+            return response()->json(['message' => 'Group not found'], 404);
+        }
+
+        $members = $group->users()->select('users.id', 'users.name', 'group_user.role')->get();
+        return response()->json($members);
+    }
 }

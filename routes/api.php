@@ -55,9 +55,6 @@ Route::post('/email/resend', function (Request $request) {
 
 // For simplicity, using the "auth" middleware here (adjust based on your auth setup)
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('groups', GroupController::class);
-    Route::apiResource('transactions', TransactionController::class);
-
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -68,10 +65,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/groups/{group}', [GroupController::class, 'show']);
     Route::put('/groups/{group}', [GroupController::class, 'update']);
     Route::delete('/groups/{group}', [GroupController::class, 'destroy']);
+    Route::get('/groups/{group}/members', [GroupController::class, 'getMembers']);
 
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store']);
+    Route::get('/transactions/export', [TransactionController::class, 'export']);
+    Route::get('/transactions/template', [TransactionController::class, 'downloadTemplate']);
+    Route::post('/transactions/import', [TransactionController::class, 'import']);
     Route::put('/transactions/{transaction}', [TransactionController::class, 'update']);
     Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy']);
 
