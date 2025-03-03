@@ -1,67 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 💰 Money Manager Backend (Laravel 10)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This is the **backend** of the **Money Manager** application, built with **Laravel 10**. It provides a **REST API** for user authentication, transactions, groups, and categories.
 
-## About Laravel
+## 🚀 Features
+- **User Authentication** (Login, Register, JWT)
+- **Group-based Transactions** (Manage Income & Expenses)
+- **Category Management** (Customizable by Groups)
+- **File Upload** (Proof of Transactions)
+- **Pagination & Filtering**
+- **Secure API with JWT Tokens**
+- **Nginx & Laravel Configuration for Production**
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🏗️ Tech Stack
+- **Laravel 10** (PHP Framework)
+- **MySQL** (Database)
+- **Sanctum / JWT** (Authentication)
+- **Eloquent ORM** (Database Management)
+- **API Resource Controllers** (REST API)
+- **Storage & File Upload Handling**
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📦 Installation
+### 1️⃣ Clone the Repository
+```sh
+git clone https://github.com/yourusername/money-manager-backend.git
+cd money-manager-backend
+```
 
-## Learning Laravel
+### 2️⃣ Install Dependencies
+```sh
+composer install
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 3️⃣ Create `.env` File
+Create a `.env` file in the project root and set up your database credentials:
+```sh
+cp .env.example .env
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Update the database credentials in the `.env` file:
+```ini
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=money_manager
+DB_USERNAME=root
+DB_PASSWORD=password
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 4️⃣ Generate Application Key
+```sh
+php artisan key:generate
+```
 
-## Laravel Sponsors
+### 5️⃣ Migrate Database
+```sh
+php artisan migrate --seed
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 6️⃣ Start the Laravel Development Server
+```sh
+php artisan serve
+```
+The API will be available at `http://localhost:8000/`.
 
-### Premium Partners
+## 🔧 API Endpoints
+| Method | Endpoint                    | Description                  |
+|--------|-----------------------------|------------------------------|
+| POST   | /api/register               | Register a new user          |
+| POST   | /api/login                  | Login and get JWT token      |
+| GET    | /api/user                   | Get logged-in user data      |
+| GET    | /api/groups                 | Get user groups              |
+| POST   | /api/groups                 | Create a new group           |
+| GET    | /api/categories             | Get transaction categories   |
+| POST   | /api/transactions           | Add a new transaction        |
+| PUT    | /api/transactions/{id}      | Update a transaction         |
+| DELETE | /api/transactions/{id}      | Delete a transaction         |
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+Use `Authorization: Bearer {token}` for authenticated requests.
 
-## Contributing
+## 🛠 Deployment (Nginx + Laravel)
+### 1️⃣ Set Permissions
+```sh
+sudo chown -R www-data:www-data /var/www/money-manager-backend/storage /var/www/money-manager-backend/bootstrap/cache
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 2️⃣ Configure Nginx for Laravel API
+Edit the Nginx config file (`/etc/nginx/sites-available/money-manager`):
+```nginx
+server {
+    listen 80;
+    server_name your-backend-url;
 
-## Code of Conduct
+    root /var/www/money-manager-backend/public;
+    index index.php index.html index.htm;
+    
+    location / {
+        try_files $uri /index.php?$query_string;
+    }
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
 
-## Security Vulnerabilities
+    location ~ /\.ht {
+        deny all;
+    }
+}
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 3️⃣ Restart Nginx & PHP
+```sh
+sudo systemctl restart nginx
+sudo systemctl restart php8.2-fpm
+```
 
-## License
+## 🔧 Environment Variables
+|    Variable   |        Description       |
+|---------------|--------------------------|
+|   `APP_URL`   | Backend API URL          | 
+|`DB_CONNECTION`| Database connection type |
+|  `JWT_SECRET` | JWT Token Secret         |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# money-manager-web
+## 🤝 Contributing
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Commit changes (`git commit -m "Add new feature"`).
+4. Push the branch (`git push origin feature-branch`).
+5. Open a Pull Request.
+
+## 📝 License
+This project is licensed under the MIT License.
