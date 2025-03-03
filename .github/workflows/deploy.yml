@@ -25,6 +25,8 @@ jobs:
             cd /var/www/money-manager-web-backend
             sudo git stash
             sudo git pull origin main
+            composer update
+            composer upgrade
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan cache:clear
