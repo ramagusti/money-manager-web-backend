@@ -21,7 +21,7 @@ jobs:
         run: |
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem
           chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+          ssh -tt -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
             cd /var/www/money-manager-web-backend
             sudo git stash
             sudo git pull origin main
