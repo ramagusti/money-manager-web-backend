@@ -27,7 +27,7 @@ jobs:
             sudo git pull origin main &&
             composer update &&
             composer upgrade &&
-            composer install --no-dev --optimize-autoloader &&
+            composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-gd &&
             php artisan migrate --force &&
             php artisan cache:clear &&
             php artisan config:clear &&
