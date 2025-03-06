@@ -19,9 +19,9 @@ jobs:
           EC2_HOST: 54.169.199.30
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem
-          chmod 600 private_key.pem
-          ssh -tt -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -i private_key.pem $EC2_USER@$EC2_HOST '
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem && chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST '
+          
             sudo su - www-data -s /bin/bash &&
             cd /var/www/money-manager-web-backend &&
             git stash &&
