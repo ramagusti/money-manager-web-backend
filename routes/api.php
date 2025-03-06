@@ -66,6 +66,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/groups/{group}', [GroupController::class, 'update']);
     Route::delete('/groups/{group}', [GroupController::class, 'destroy']);
     Route::get('/groups/{group}/members', [GroupController::class, 'getMembers']);
+    Route::get('/groups/{group}/balance', [GroupController::class, 'getBalance']);
+    Route::get('/groups/{group}/goal', [GroupController::class, 'getGoal']); 
+    Route::post('/groups/{group}/goal', [GroupController::class, 'storeGoal']); 
+    Route::get('/groups/{group}/incomeexpense', [GroupController::class, 'getIncomeExpense']);
 
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);

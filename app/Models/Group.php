@@ -11,6 +11,7 @@ class Group extends Model
         'description',
         'is_private',
         'owner_id',
+        'goal_amount',
         'created_by',
         'created_at',
         'updated_by',
@@ -61,5 +62,10 @@ class Group extends Model
         return $this->belongsToMany(User::class, 'group_user')
             ->withPivot('role')
             ->withTimestamps();
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

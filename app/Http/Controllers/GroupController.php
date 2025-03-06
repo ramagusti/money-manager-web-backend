@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Group;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class GroupController extends Controller
 {
@@ -67,5 +69,44 @@ class GroupController extends Controller
 
         $members = $group->users()->select('users.id', 'users.name', 'group_user.role')->get();
         return response()->json($members);
+    }
+
+    public function getBalance(Request $request, Group $group)
+    {
+        $totalIncome = $group->transactions()->where('type', 'income')->sum('amount');
+        $totalExpense = $group->transactions()->where('type', 'expense')->sum('amount');
+
+        return response()->json([
+            'balance' => $totalIncome - $totalExpense,
+        ]);
+    }
+
+    public function getGoal(Request $request, Group $group)
+    {
+        return response()->json($group->goal_amount ?? 0);
+    }
+
+    public function storeGoal(Request $request, Group $group)
+    {
+        $group->update([
+            'goal_amount' => $request->goal_amount,
+        ]);
+
+        return response()->json($group);
+    }
+
+    public function getIncomeExpense(Request $request, Group $group)
+    {
+        $now = Carbon::now();
+        $query = $group->transactions()
+            ->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$now->format('Y-m')]);
+
+        $totalIncome = $query->clone()->where('type', 'income')->sum('amount');
+        $totalExpense = $query->clone()->where('type', 'expense')->sum('amount');
+
+        return response()->json([
+            'income' => $totalIncome,
+            'expense' => $totalExpense,
+        ]);
     }
 }
