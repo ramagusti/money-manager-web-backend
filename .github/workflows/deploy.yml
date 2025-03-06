@@ -23,16 +23,16 @@ jobs:
           chmod 600 private_key.pem
           ssh -tt -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
             sudo su - www-data -s /bin/bash << 'INNER_EOF'
-              cd /var/www/money-manager-web-backend
-              git stash
-              git pull origin main
-              composer install --no-dev --optimize-autoloader
-              php artisan migrate --force
-              php artisan cache:clear
-              php artisan config:clear
-              php artisan route:clear
-              php artisan view:clear
+              cd /var/www/money-manager-web-backend &&
+              git stash &&
+              git pull origin main &&
+              composer install --no-dev --optimize-autoloader &&
+              php artisan migrate --force &&
+              php artisan cache:clear &&
+              php artisan config:clear &&
+              php artisan route:clear &&
+              php artisan view:clear &&
             INNER_EOF
-            sudo systemctl restart nginx
-            sudo systemctl restart php8.2-fpm
+            sudo systemctl restart nginx &&
+            sudo systemctl restart php8.2-fpm &&
           EOF
