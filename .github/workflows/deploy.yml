@@ -19,19 +19,20 @@ jobs:
           EC2_HOST: 54.169.199.30
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem && chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST '
-          
-            sudo su - www-data -s /bin/bash &&
-            cd /var/www/money-manager-web-backend &&
-            git stash &&
-            git pull origin main &&
-            composer install --no-dev --optimize-autoloader &&
-            php artisan migrate --force &&
-            php artisan cache:clear &&
-            php artisan config:clear &&
-            php artisan route:clear &&
-            php artisan view:clear &&
-            systemctl restart nginx &&
-            systemctl restart php8.2-fpm
-          '
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+            sudo -u www-data -- sh -c '
+              cd /var/www/money-manager-web-backend &&
+              git stash &&
+              git pull origin main &&
+              composer install --no-dev --optimize-autoloader &&
+              php artisan migrate --force &&
+              php artisan cache:clear &&
+              php artisan config:clear &&
+              php artisan route:clear &&
+              php artisan view:clear
+            '
+            sudo systemctl restart nginx
+            sudo systemctl restart php8.2-fpm
+          EOF
