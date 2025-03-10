@@ -24,8 +24,8 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
             sudo -u www-data -- sh -c '
               cd /var/www/money-manager-web-backend &&
-              git stash &&
-              git pull origin main &&
+              git reset --hard origin/main
+              git pull origin main
               composer install --no-dev --optimize-autoloader &&
               php artisan migrate --force &&
               php artisan cache:clear &&
