@@ -9,6 +9,8 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
+use App\Mail\VerifyEmail;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -31,7 +33,8 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        event(new Registered($user)); // Sends verification email
+        // event(new Registered($user)); // Sends verification email
+        Mail::to($user->email)->send(new VerifyEmail($user));
 
         return response()->json(['message' => 'Account created! Please check your email for verification.'], 201);
     }
