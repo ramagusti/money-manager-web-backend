@@ -9,6 +9,8 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
+use App\Mail\VerifyEmail;
+use Illuminate\Support\Facades\Mail;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -48,7 +50,8 @@ Route::post('/email/resend', function (Request $request) {
         return response()->json(['message' => 'Email already verified.'], 400);
     }
 
-    $user->sendEmailVerificationNotification();
+    // $user->sendEmailVerificationNotification();
+    Mail::to($user->email)->send(new VerifyEmail($user));
 
     return response()->json(['message' => 'Verification email sent!']);
 });
