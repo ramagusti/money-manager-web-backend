@@ -12,7 +12,7 @@
     <table align="center" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background: #ffffff; border-radius: 8px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); padding: 20px;">
         <tr>
             <td style="text-align: center;">
-                <img src="{{ config('app.url') }}/images/PiggyBang.png" alt="PiggyBang Logo" width="120" style="margin-bottom: 20px;"> 
+                <img src="{{ asset('images/PiggyBang.png') }}" alt="PiggyBang Logo" width="120" style="margin-bottom: 20px;"> 
                 <h2 style="color: #333; font-weight: 600;">Welcome to PiggyBang</h2>
                 <p style="color: #555; font-size: 16px;">
                     Hi <strong>{{ $user->name }}</strong>, <br>
