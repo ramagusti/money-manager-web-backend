@@ -11,6 +11,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\VerifyEmail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
@@ -22,10 +23,21 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'invite_token' => 'nullable|string',
+            'recaptcha_token' => 'required|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => env('RECAPTCHA_SECRET_KEY'),
+            'response' => $request->recaptcha_token,
+        ]);
+
+        $responseData = $response->json();
+        if (!$responseData['success'] || $responseData['score'] < 0.5) {
+            return response()->json(['errors' => ['recaptcha' => 'reCAPTCHA validation failed']], 422);
         }
 
         $user = User::create([

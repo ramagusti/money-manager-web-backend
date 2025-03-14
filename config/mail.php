@@ -37,6 +37,10 @@ return [
 
     'mailers' => [
 
+        'mailersend' => [
+            'transport' => 'mailersend',
+        ],
+
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),
@@ -74,7 +78,7 @@ return [
             'transport' => 'log',
             'channel' => env('MAIL_LOG_CHANNEL'),
         ],
-        
+
         'log_channel' => env('MAIL_LOG_CHANNEL', 'stack'),
 
         'array' => [
@@ -111,8 +115,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', 'noreply@ragst.vip'),
+        'name' => env('MAIL_FROM_NAME', 'PiggyBang'),
     ],
 
 ];
