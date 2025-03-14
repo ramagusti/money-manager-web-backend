@@ -23,6 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'invite_token',
     ];
 
     /**
@@ -53,5 +54,17 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Group::class, 'group_user')
             ->withPivot('role')
             ->withTimestamps();
+    }
+
+    // Check if the user is the owner of a group
+    public function isGroupOwner($groupId)
+    {
+        return $this->groups()->where('group_id', $groupId)->wherePivot('role', 'owner')->exists();
+    }
+
+    // Check if the user is an admin or owner
+    public function isGroupAdmin($groupId)
+    {
+        return $this->groups()->where('group_id', $groupId)->wherePivotIn('role', ['owner', 'admin'])->exists();
     }
 }

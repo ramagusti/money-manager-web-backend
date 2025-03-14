@@ -9,6 +9,8 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
+use App\Models\Group;
+use App\Models\GroupInvitation;
 use App\Mail\VerifyEmail;
 use Illuminate\Support\Facades\Mail;
 
@@ -30,13 +32,26 @@ Route::get('/email/verify/{id}/{hash}', function ($id, $hash, Request $request) 
 
     // If already verified
     if ($user->hasVerifiedEmail()) {
-        return redirect(env('FRONTEND_URL', 'http://localhost:5173') . '/already-verified');
+        return redirect(env('FRONTEND_URL', 'https://ragst.vip') . '/already-verified');
     }
 
     // Mark email as verified
     $user->markEmailAsVerified();
+    
+    // Check if user was invited to a group
+    if ($user->invite_token) {
+        $invitation = GroupInvitation::where('token', $user->invite_token)->first();
 
-    return redirect(env('FRONTEND_URL', 'http://localhost:5173') . '/verified-success');
+        if ($invitation) {
+            $group = Group::find($invitation->group_id);
+            if ($group) {
+                $group->users()->attach($user->id, ['role' => 'member']);
+                $invitation->delete(); // Remove the used invitation
+            }
+        }
+    }
+
+    return redirect(env('FRONTEND_URL', 'https://ragst.vip') . '/verified-success');
 })->middleware(['signed'])->name('verification.verify');
 
 Route::post('/email/resend', function (Request $request) {
@@ -65,14 +80,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // Groups
     Route::get('/groups', [GroupController::class, 'index']);
     Route::post('/groups', [GroupController::class, 'store']);
+    Route::post('/groups/members/accept-invite', [GroupController::class, 'acceptInvitation']);
     Route::get('/groups/{group}', [GroupController::class, 'show']);
-    Route::put('/groups/{group}', [GroupController::class, 'update']);
-    Route::delete('/groups/{group}', [GroupController::class, 'destroy']);
-    Route::get('/groups/{group}/members', [GroupController::class, 'getMembers']);
+    Route::put('/groups/{group}', [GroupController::class, 'update'])->middleware('groupRole:owner|admin');
+    Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->middleware('groupRole:owner');
     Route::get('/groups/{group}/balance', [GroupController::class, 'getBalance']);
     Route::get('/groups/{group}/goal', [GroupController::class, 'getGoal']); 
-    Route::post('/groups/{group}/goal', [GroupController::class, 'storeGoal']); 
+    Route::post('/groups/{group}/goal', [GroupController::class, 'storeGoal'])->middleware('groupRole:owner|admin'); 
     Route::get('/groups/{group}/incomeexpense', [GroupController::class, 'getIncomeExpense']);
+    Route::get('/groups/{group}/members', [GroupController::class, 'getMembers']);
+    Route::post('/groups/{group}/members', [GroupController::class, 'addMember'])->middleware('groupRole:owner|admin');
+    Route::post('/groups/{group}/members/invite', [GroupController::class, 'inviteMember'])->middleware('groupRole:owner|admin');
+    Route::delete('/groups/{group}/members/{user}', [GroupController::class, 'removeMember'])->middleware('groupRole:owner|admin');
 
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);
