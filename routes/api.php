@@ -80,7 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Groups
     Route::get('/groups', [GroupController::class, 'index']);
     Route::post('/groups', [GroupController::class, 'store']);
-    Route::post('/groups/members/accept-invite', [GroupController::class, 'acceptInvitation']);
+    Route::post('/groups/join', [GroupController::class, 'acceptInvitation']);
     Route::get('/groups/{group}', [GroupController::class, 'show']);
     Route::put('/groups/{group}', [GroupController::class, 'update'])->middleware('groupRole:owner|admin');
     Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->middleware('groupRole:owner');
@@ -91,6 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/groups/{group}/members', [GroupController::class, 'getMembers']);
     Route::post('/groups/{group}/members', [GroupController::class, 'addMember'])->middleware('groupRole:owner|admin');
     Route::post('/groups/{group}/members/invite', [GroupController::class, 'inviteMember'])->middleware('groupRole:owner|admin');
+    Route::put('/groups/{group}/members/{user}', [GroupController::class, 'updateMemberRole'])->middleware('groupRole:owner|admin');
     Route::delete('/groups/{group}/members/{user}', [GroupController::class, 'removeMember'])->middleware('groupRole:owner|admin');
 
     // Transactions
