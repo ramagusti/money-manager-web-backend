@@ -46,8 +46,8 @@ class TestEmail extends Mailable
         );
 
         return new Content(
-            view: 'mail.test_email',
-            text: 'mail.test_email_text'
+            view: 'emails.test_email',
+            text: 'emails.test_email_text'
         );
     }
 }

@@ -1,21 +1,27 @@
 <?php
 
-use App\Http\Controllers\GroupController;
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\TransactionCategoryController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\Request;
+
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Mail\VerifyEmail;
+
 use App\Models\User;
 use App\Models\Group;
 use App\Models\GroupInvitation;
-use App\Mail\VerifyEmail;
-use Illuminate\Support\Facades\Mail;
+
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransactionCategoryController;
+use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\AuthController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 
 Route::get('/email/verify/{id}/{hash}', function ($id, $hash, Request $request) {
     // Find the user
@@ -37,7 +43,7 @@ Route::get('/email/verify/{id}/{hash}', function ($id, $hash, Request $request) 
 
     // Mark email as verified
     $user->markEmailAsVerified();
-    
+
     // Check if user was invited to a group
     if ($user->invite_token) {
         $invitation = GroupInvitation::where('token', $user->invite_token)->first();
@@ -85,8 +91,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/groups/{group}', [GroupController::class, 'update'])->middleware('groupRole:owner|admin');
     Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->middleware('groupRole:owner');
     Route::get('/groups/{group}/balance', [GroupController::class, 'getBalance']);
-    Route::get('/groups/{group}/goal', [GroupController::class, 'getGoal']); 
-    Route::post('/groups/{group}/goal', [GroupController::class, 'storeGoal'])->middleware('groupRole:owner|admin'); 
+    Route::get('/groups/{group}/goal', [GroupController::class, 'getGoal']);
+    Route::post('/groups/{group}/goal', [GroupController::class, 'storeGoal'])->middleware('groupRole:owner|admin');
     Route::get('/groups/{group}/incomeexpense', [GroupController::class, 'getIncomeExpense']);
     Route::get('/groups/{group}/members', [GroupController::class, 'getMembers']);
     Route::post('/groups/{group}/members', [GroupController::class, 'addMember'])->middleware('groupRole:owner|admin');

@@ -25,6 +25,6 @@ class NewMemberNotification extends Mailable
     public function build()
     {
         return $this->subject('New Member Joined Your Group')
-            ->view('mail.new_member_notification');
+            ->view('emails.new_member_notification');
     }
 }

@@ -26,6 +26,6 @@ class GroupInvitationMail extends Mailable
     public function build()
     {
         return $this->subject("You're invited to join {$this->group->name} on PiggyBang")
-            ->view('mail.group_invitation');
+            ->view('emails.group_invitation');
     }
 }
