@@ -45,17 +45,10 @@ class TransactionController extends Controller
             $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
         }
 
-        $totalIncome = $query->clone()->where('type', 'income')->sum('amount');
-        $totalExpense = $query->clone()->where('type', 'expense')->sum('amount');
-        $totalSavings = $totalIncome - $totalExpense;
-
         $transactions = $query->orderBy('transaction_time', 'desc')->paginate(10);
 
         return response()->json([
             'transactions' => $transactions,
-            'total_income' => $totalIncome,
-            'total_expense' => $totalExpense,
-            'total_savings' => $totalSavings,
         ]);
     }
 
@@ -167,5 +160,45 @@ class TransactionController extends Controller
         Excel::import(new TransactionsImport($request->group_id), $request->file('file'));
 
         return response()->json(["message" => "Transactions imported successfully"]);
+    }
+
+    public function dashboardData(Request $request)
+    {
+        $groupId = $request->query('group_id');
+
+        if (!$groupId) {
+            return response()->json(['error' => 'No group selected'], 403);
+        }
+
+        $query = Transaction::where('group_id', $groupId)->with('category');
+
+        // Filter by transaction type (income/expense)
+        if ($request->has('type') && !empty($request->type)) {
+            $query->where('type', $request->type);
+        }
+
+        // Filter by category
+        if ($request->has('category_id') && !empty($request->category_id)) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filter by month
+        if ($request->has('date') && !empty($request->date)) {
+            $date = $request->date;
+            $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
+        }
+
+        $transactions = $query->orderBy('transaction_time', 'desc')->get();
+
+        $totalIncome = $transactions->where('type', 'income')->sum('amount');
+        $totalExpense = $transactions->where('type', 'expense')->sum('amount');
+        $totalSavings = $totalIncome - $totalExpense;
+
+        return response()->json([
+            'transactions' => $transactions,
+            'total_income' => $totalIncome,
+            'total_expense' => $totalExpense,
+            'total_savings' => $totalSavings,
+        ]);
     }
 }

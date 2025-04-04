@@ -26,12 +26,15 @@ class TransactionsImport implements ToModel, WithHeadingRow
             return null;
         }
 
-        $transactionTime = $row['transaction_time'];
-        // Validate the transaction time for a correct date
-        if (!$this->isValidDate($transactionTime)) {
-            Log::error("Invalid transaction time: " . $transactionTime);
+        $transactionTimeObj = \DateTime::createFromFormat('d/m/Y H:i:s', $row['transaction_time']) 
+            ?: \DateTime::createFromFormat('Y-m-d H:i:s', $row['transaction_time']);
+
+        if (!$transactionTimeObj) {
+            Log::error("Invalid transaction time: " . $row['transaction_time']);
             return null;
         }
+
+        $transactionTime = $transactionTimeObj->format('Y-m-d H:i:s');
 
         return new Transaction([
             'group_id' => $group->id,
@@ -43,12 +46,6 @@ class TransactionsImport implements ToModel, WithHeadingRow
             'transaction_time' => $transactionTime,
             'user_id' => Auth::user()->id,
         ]);
-    }
-
-    private function isValidDate($date)
-    {
-        $d = \DateTime::createFromFormat('Y-m-d H:i:s', $date);
-        return $d && $d->format('Y-m-d H:i:s') === $date;
     }
 }
 

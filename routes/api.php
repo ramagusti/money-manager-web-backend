@@ -103,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store']);
+    Route::get('/dashboard-data', [TransactionController::class, 'dashboardData']);
     Route::get('/transactions/export', [TransactionController::class, 'export']);
     Route::get('/transactions/template', [TransactionController::class, 'downloadTemplate']);
     Route::post('/transactions/import', [TransactionController::class, 'import']);
