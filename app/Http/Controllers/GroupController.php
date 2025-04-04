@@ -68,8 +68,8 @@ class GroupController extends Controller
 
     public function getBalance(Request $request, Group $group)
     {
-        $totalIncome = $group->transactions()->where('type', 'income')->sum('amount');
-        $totalExpense = $group->transactions()->where('type', 'expense')->sum('amount');
+        $totalIncome = $group->transactions()->where('type', 'income')->whereNotIn('category_id', [20, 21])->sum('amount');
+        $totalExpense = $group->transactions()->where('type', 'expense')->whereNotIn('category_id', [20, 21])->sum('amount');
 
         return response()->json([
             'balance' => $totalIncome - $totalExpense,

@@ -20,7 +20,10 @@ class TransactionsImport implements ToModel, WithHeadingRow
             return null;
         }
 
-        $category = TransactionCategory::where('group_id', $group->id)->where('name', $row['category'])->first();
+        $category = TransactionCategory::where('group_id', $group->id)
+            ->where('name', $row['category'])
+            ->where('type', $row['type'])
+            ->first();
         if (!$category) {
             Log::error("Category not found: " . $row['category']);
             return null;
