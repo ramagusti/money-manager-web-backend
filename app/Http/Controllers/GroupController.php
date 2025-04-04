@@ -68,8 +68,8 @@ class GroupController extends Controller
 
     public function getBalance(Request $request, Group $group)
     {
-        $totalIncome = $group->transactions()->where('type', 'income')->whereNotIn('category_id', [20, 21])->sum('amount');
-        $totalExpense = $group->transactions()->where('type', 'expense')->whereNotIn('category_id', [20, 21])->sum('amount');
+        $totalIncome = $group->transactions()->where('type', 'income')->sum('amount');
+        $totalExpense = $group->transactions()->where('type', 'expense')->sum('amount');
 
         return response()->json([
             'balance' => $totalIncome - $totalExpense,
@@ -94,6 +94,7 @@ class GroupController extends Controller
     {
         $now = Carbon::now();
         $query = $group->transactions()
+            ->whereNotIn('category_id', [20, 21])
             ->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$now->format('Y-m')]);
 
         $totalIncome = $query->clone()->where('type', 'income')->sum('amount');

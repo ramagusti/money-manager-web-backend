@@ -44,7 +44,7 @@ class TransactionController extends Controller
             $date = $request->date;
             $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
         }
-        
+
         $allTransactions = $query->orderBy('transaction_time', 'desc')->get();
         $totalIncome = $allTransactions->where('type', 'income')
             ->whereNotIn('category_id', [20, 21])
@@ -200,17 +200,19 @@ class TransactionController extends Controller
             $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
         }
 
-        $transactions = $query->whereNotIn('category_id', [20, 21])->orderBy('transaction_time', 'desc')->get();
-        $totalIncome = $transactions->where('type', 'income')
+        $allTransactions = $query->clone()->orderBy('transaction_time', 'desc')->get();
+        $filteredTransactions = $query->clone()->whereNotIn('category_id', [20, 21])->orderBy('transaction_time', 'desc')->get();
+        $totalIncome = $allTransactions->where('type', 'income')
             ->whereNotIn('category_id', [20, 21])
             ->sum('amount');
-        $totalExpense = $transactions->where('type', 'expense')
+        $totalExpense = $allTransactions->where('type', 'expense')
             ->whereNotIn('category_id', [20, 21])
             ->sum('amount');
         $totalSavings = $totalIncome - $totalExpense;
 
         return response()->json([
-            'transactions' => $transactions,
+            'all_transactions' => $allTransactions,
+            'filtered_transactions' => $filteredTransactions,
             'total_income' => $totalIncome,
             'total_expense' => $totalExpense,
             'total_savings' => $totalSavings,
