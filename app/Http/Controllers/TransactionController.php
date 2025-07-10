@@ -200,7 +200,7 @@ class TransactionController extends Controller
             $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
         }
 
-        $allTransactions = $query->clone()->orderBy('transaction_time', 'desc')->get();
+        $allTransactions = $query->clone()->orderBy('transaction_time', 'desc')->take(10)->get();
         $filteredTransactions = $query->clone()->whereNotIn('category_id', [20, 21])->orderBy('transaction_time', 'desc')->get();
         $totalIncome = $allTransactions->where('type', 'income')
             ->whereNotIn('category_id', [20, 21])
