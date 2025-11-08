@@ -70,7 +70,7 @@ class EntryIngestionController extends Controller
                     'amount' => round($entry['value']['amount'], 2),
                     'type' => $entry['type'],
                     'description' => $entry['description'] ?? null,
-                    'actor' => $entry['actor']['name'] ?? $entry['actor']['id'] ?? null,
+                    'actor' => $entry['actor'] ?? null,
                     'transaction_time' => Carbon::parse($entry['datetime']),
                     'proof' => null,
                 ])->fresh(['category']);
