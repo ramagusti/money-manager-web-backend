@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Group;
 use App\Models\GroupInvitation;
 
+use App\Http\Controllers\EntryIngestionController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionCategoryController;
@@ -76,6 +77,8 @@ Route::post('/email/resend', function (Request $request) {
 
     return response()->json(['message' => 'Verification email sent!']);
 });
+
+Route::post('/entries/ingest', [EntryIngestionController::class, 'store']);
 
 // For simplicity, using the "auth" middleware here (adjust based on your auth setup)
 Route::middleware('auth:sanctum')->group(function () {
