@@ -19,6 +19,7 @@ class EntryIngestionController extends Controller
     {
         $validated = $request->validate([
             'group_id' => ['required', 'exists:groups,id'],
+            'user_id' => ['required', 'exists:users,id'],
             'output.entries' => ['required', 'array', 'min:1'],
             'output.entries.*.type' => ['required', Rule::in(['income', 'expense'])],
             'output.entries.*.category' => ['required', 'array'],
@@ -38,11 +39,12 @@ class EntryIngestionController extends Controller
         ]);
 
         $groupId = $validated['group_id'];
-        $user = $request->user();
+        // $user = $request->user();
 
-        if (!$user->groups()->where('group_id', $groupId)->exists()) {
-            return response()->json(['message' => 'You are not a member of this group.'], 403);
-        }
+        // if (!$user->groups()->where('group_id', $groupId)->exists()) {
+        //     return response()->json(['message' => 'You are not a member of this group.'], 403);
+        // }
+        $userId = $validated['user_id'];
 
         $entries = $validated['output']['entries'];
 
@@ -61,7 +63,8 @@ class EntryIngestionController extends Controller
                 }
 
                 $transactions[] = Transaction::create([
-                    'user_id' => $user->id,
+                    // 'user_id' => $user->id,
+                    'user_id' => $userId,
                     'group_id' => $groupId,
                     'category_id' => $categoryId,
                     'amount' => round($entry['value']['amount'], 2),
