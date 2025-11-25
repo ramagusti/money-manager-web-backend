@@ -34,15 +34,18 @@ class TransactionController extends Controller
             $query->where('type', $request->type);
         }
 
+        // Filter by date range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereDate('transaction_time', '>=', $request->start_date)
+                ->whereDate('transaction_time', '<=', $request->end_date);
+        } elseif ($request->has('date') && !empty($request->date)) {
+            $date = $request->date;
+            $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
+        }
+
         // Filter by category
         if ($request->has('category_id') && !empty($request->category_id)) {
             $query->where('category_id', $request->category_id);
-        }
-
-        // Filter by month
-        if ($request->has('date') && !empty($request->date)) {
-            $date = $request->date;
-            $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
         }
 
         $allTransactions = $query->orderBy('transaction_time', 'desc')->get();
@@ -189,33 +192,56 @@ class TransactionController extends Controller
             $query->where('type', $request->type);
         }
 
+        // Filter by date range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereDate('transaction_time', '>=', $request->start_date)
+                ->whereDate('transaction_time', '<=', $request->end_date);
+        } elseif ($request->has('date') && !empty($request->date)) {
+            $date = $request->date;
+            $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
+        }
+
         // Filter by category
         if ($request->has('category_id') && !empty($request->category_id)) {
             $query->where('category_id', $request->category_id);
         }
 
-        // Filter by month
-        if ($request->has('date') && !empty($request->date)) {
-            $date = $request->date;
-            $query->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$date]);
-        }
+        $recentTransactions = $query->clone()->orderBy('transaction_time', 'desc')->take(10)->get();
 
-        $allTransactions = $query->clone()->orderBy('transaction_time', 'desc')->take(10)->get();
-        $filteredTransactions = $query->clone()->whereNotIn('category_id', [20, 21])->orderBy('transaction_time', 'desc')->get();
-        $totalIncome = $allTransactions->where('type', 'income')
-            ->whereNotIn('category_id', [20, 21])
-            ->sum('amount');
-        $totalExpense = $allTransactions->where('type', 'expense')
-            ->whereNotIn('category_id', [20, 21])
-            ->sum('amount');
+        // Exclude savings transfers when calculating rollups
+        $scopedQuery = $query->clone()->whereNotIn('category_id', [20, 21]);
+        $filteredTransactions = $scopedQuery->clone()->orderBy('transaction_time', 'desc')->get();
+
+        $totalIncome = $scopedQuery->clone()->where('type', 'income')->sum('amount');
+        $totalExpense = $scopedQuery->clone()->where('type', 'expense')->sum('amount');
         $totalSavings = $totalIncome - $totalExpense;
 
+        $memberOverview = $scopedQuery->clone()
+            ->selectRaw("COALESCE(actor, 'Unknown') as actor_name")
+            ->selectRaw("SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income")
+            ->selectRaw("SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense")
+            ->groupBy('actor_name')
+            ->get()
+            ->map(function ($row) {
+                $income = (float) $row->total_income;
+                $expense = (float) $row->total_expense;
+
+                return [
+                    'actor' => $row->actor_name,
+                    'total_income' => $income,
+                    'total_expense' => $expense,
+                    'total_savings' => $income - $expense,
+                ];
+            })
+            ->values();
+
         return response()->json([
-            'all_transactions' => $allTransactions,
+            'all_transactions' => $recentTransactions,
             'filtered_transactions' => $filteredTransactions,
             'total_income' => $totalIncome,
             'total_expense' => $totalExpense,
             'total_savings' => $totalSavings,
+            'member_overview' => $memberOverview,
         ]);
     }
 }
