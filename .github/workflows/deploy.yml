@@ -34,5 +34,5 @@ jobs:
               php artisan view:clear
             '
             sudo systemctl restart nginx
-            sudo systemctl restart php8.2-fpm
+            sudo systemctl restart php8.3-fpm
           EOF
