@@ -96,7 +96,7 @@ class GroupController extends Controller
         $query = $group->transactions()
             ->whereNotIn('category_id', [20, 21])
             ->whereYear('transaction_time', $now->year)
-->whereMonth('transaction_time', $now->month);
+ ->whereMonth('transaction_time', $now->month);
 
         $totalIncome = $query->clone()->where('type', 'income')->sum('amount');
         $totalExpense = $query->clone()->where('type', 'expense')->sum('amount');
