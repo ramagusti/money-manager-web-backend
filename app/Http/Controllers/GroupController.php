@@ -95,7 +95,8 @@ class GroupController extends Controller
         $now = Carbon::now();
         $query = $group->transactions()
             ->whereNotIn('category_id', [20, 21])
-            ->whereRaw("DATE_FORMAT(transaction_time, '%Y-%m') = ?", [$now->format('Y-m')]);
+            ->whereYear('transaction_time', $now->year)
+->whereMonth('transaction_time', $now->month);
 
         $totalIncome = $query->clone()->where('type', 'income')->sum('amount');
         $totalExpense = $query->clone()->where('type', 'expense')->sum('amount');
