@@ -1,4 +1,4 @@
-name: Deploy Laravel to EC2
+name: Deploy Laravel Backend to VPS
 
 on:
   push:
@@ -10,10 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Deploy to EC2
+      - name: Deploy to VPS
         env:
           EC2_USER: root
           EC2_HOST: 217.216.110.171
@@ -21,18 +18,21 @@ jobs:
         run: |
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > private_key.pem
           chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
-            sudo -u www-data -- sh -c '
+          ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+            cd /var/www/money-manager-web-backend
+            chown -R openclaw:openclaw /var/www/money-manager-web-backend
+            sudo -u openclaw -- sh -lc '
               cd /var/www/money-manager-web-backend &&
-              git reset --hard origin/main
-              git pull origin main
+              git fetch origin &&
+              git reset --hard origin/main &&
               composer install --no-dev --optimize-autoloader &&
               php artisan migrate --force &&
               php artisan cache:clear &&
               php artisan config:clear &&
               php artisan route:clear &&
-              php artisan view:clear
+              php artisan view:clear &&
+              /home/openclaw/.npm-global/bin/pm2 restart piggybang-backend &&
+              /home/openclaw/.npm-global/bin/pm2 save
             '
-            sudo systemctl restart nginx
-            sudo systemctl restart php8.3-fpm
+            systemctl reload nginx
           EOF
