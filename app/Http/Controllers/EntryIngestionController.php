@@ -62,6 +62,11 @@ class EntryIngestionController extends Controller
                     ]);
                 }
 
+                $actor = $entry['actor'] ?? null;
+                if (is_array($actor)) {
+                    $actor = $actor['name'] ?? $actor['id'] ?? null;
+                }
+
                 $transactions[] = Transaction::create([
                     // 'user_id' => $user->id,
                     'user_id' => $userId,
@@ -70,7 +75,7 @@ class EntryIngestionController extends Controller
                     'amount' => round($entry['value']['amount'], 2),
                     'type' => $entry['type'],
                     'description' => $entry['description'] ?? null,
-                    'actor' => $entry['actor'] ?? null,
+                    'actor' => $actor,
                     'transaction_time' => Carbon::parse($entry['datetime']),
                     'proof' => null,
                 ])->fresh(['category']);
