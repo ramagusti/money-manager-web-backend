@@ -216,7 +216,9 @@ class TransactionController extends Controller
         $totalExpense = $scopedQuery->clone()->where('type', 'expense')->sum('amount');
         $totalSavings = $totalIncome - $totalExpense;
 
-        $memberOverview = $scopedQuery->clone()
+        // Member overview must stay in sync with "Available balance":
+        // use all-time, raw totals (no category exclusions).
+        $memberOverview = Transaction::where('group_id', $groupId)
             ->selectRaw("COALESCE(actor, 'Unknown') as actor_name")
             ->selectRaw("SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income")
             ->selectRaw("SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense")
